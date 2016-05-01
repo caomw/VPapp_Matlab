@@ -22,7 +22,7 @@ function varargout = app(varargin)
 
 % Edit the above text to modify the response to help app
 
-% Last Modified by GUIDE v2.5 01-May-2016 22:14:25
+% Last Modified by GUIDE v2.5 01-May-2016 23:08:22
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -123,6 +123,7 @@ if(item==1)
 elseif(item==2)
     caminfo = imaqhwinfo('winvideo',1);
     vidobj = videoinput('winvideo',caminfo.DeviceID,'YUY2_320x240');
+    vidobj.ReturnedColorSpace = 'rgb';
     I = getsnapshot(vidobj);
 
 %     vidobj = imaq.VideoDevice('winvideo', 1, 'YUY2_320x240');
@@ -791,7 +792,7 @@ h = handles.himg;
 axes = findobj(h,'Type','axes');
 
 %Get kernel from the table
-kernel = get(handles.uitable1,'Data')/9;
+kernel = get(handles.uitable1,'Data');
 
 %Apply the filter
 if(size(Ip,3)==1)
@@ -1166,7 +1167,11 @@ h = handles.himg;
 axes = findobj(h,'Type','axes');
 
 %Get features of original image
-grayImage1 = rgb2gray(Ip);
+if(size(Ip,3)==3)
+    grayImage1 = rgb2gray(Ip);
+else
+    grayImage1 = Ip;
+end
 points1 = detectSURFFeatures(grayImage1);
 [features1, valid_points1] = extractFeatures(grayImage1, points1);
 
@@ -1177,7 +1182,11 @@ complete = strcat(pn,fn);
 I2 = imread(complete);
 
 %Get features of the new image
-grayImage2 = rgb2gray(I2);
+if(size(I2,3)==3)
+    grayImage2 = rgb2gray(I2);
+else
+    grayImage2 = Ip;
+end
 points2 = detectSURFFeatures(grayImage2);
 [features2, valid_points2] = extractFeatures(grayImage2, points2);
 
@@ -1200,3 +1209,88 @@ function pushbuttonG5_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 run FMatrix.m
+
+
+% --- Executes on button press in pushbuttonGray.
+function pushbuttonGray_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbuttonGray (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+%get the image and its axes
+Ip = handles.img;
+h = handles.himg;
+axes = findobj(h,'Type','axes');
+
+Ip = rgb2gray(Ip);
+
+%Display the modified image
+imshow(Ip, [], 'Parent', axes);
+handles.img = Ip;
+guidata(hObject,handles);
+
+
+
+% --- Executes on button press in pushbuttonHSV.
+function pushbuttonHSV_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbuttonHSV (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%get the image and its axes
+Ip = handles.img;
+h = handles.himg;
+axes = findobj(h,'Type','axes');
+
+Ip = rgb2hsv(Ip);
+
+%Display the modified image
+imshow(Ip, [], 'Parent', axes);
+handles.img = Ip;
+guidata(hObject,handles);
+
+% --- Executes on button press in pushbuttonNtsc.
+function pushbuttonNtsc_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbuttonNtsc (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%get the image and its axes
+Ip = handles.img;
+h = handles.himg;
+axes = findobj(h,'Type','axes');
+
+Ip = rgb2ntsc(Ip);
+
+%Display the modified image
+imshow(Ip, [], 'Parent', axes);
+handles.img = Ip;
+guidata(hObject,handles);
+
+% --- Executes on button press in pushbuttonYcrcb.
+function pushbuttonYcrcb_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbuttonYcrcb (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%get the image and its axes
+Ip = handles.img;
+h = handles.himg;
+axes = findobj(h,'Type','axes');
+
+Ip = rgb2ycbcr(Ip);
+
+%Display the modified image
+imshow(Ip, [], 'Parent', axes);
+handles.img = Ip;
+guidata(hObject,handles);
+
+
+% --- Executes on button press in pushbuttonSave.
+function pushbuttonSave_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbuttonSave (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+Ip = handles.img;
+[file,path] = uiputfile({'*.jpg;*.tif;*.png;*.gif'},'Save Processed image');
+imwrite(Ip,[path,file]);

@@ -22,7 +22,7 @@ function varargout = FMatrix(varargin)
 
 % Edit the above text to modify the response to help FMatrix
 
-% Last Modified by GUIDE v2.5 26-Apr-2016 21:57:39
+% Last Modified by GUIDE v2.5 01-May-2016 23:41:56
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -120,14 +120,39 @@ function pushbuttonWcam1_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbuttonWcam1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+caminfo = imaqhwinfo('winvideo',1);
+vidobj = videoinput('winvideo',caminfo.DeviceID,'YUY2_320x240');
+vidobj.ReturnedColorSpace = 'rgb';
+I = getsnapshot(vidobj);
+axes = handles.axes1;
 
+%Display the image
+imshow(I,[],'Parent',axes);
+hold on;
+
+%Save handle
+handles.img1 = I;
+guidata(hObject,handles);
 
 % --- Executes on button press in pushbuttonWcam2.
 function pushbuttonWcam2_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbuttonWcam2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+caminfo = imaqhwinfo('winvideo',1);
+vidobj = videoinput('winvideo',caminfo.DeviceID,'YUY2_320x240');
+vidobj.ReturnedColorSpace = 'rgb';
+I = getsnapshot(vidobj);
 
+axes = handles.axes2;
+
+%Display the image
+imshow(I,[],'Parent',axes);
+hold on;
+
+%Save handle
+handles.img2 = I;
+guidata(hObject,handles);
 
 % --- Executes on button press in pushbuttonHomo.
 function pushbuttonHomo_Callback(hObject, eventdata, handles)
@@ -135,6 +160,47 @@ function pushbuttonHomo_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+%Get handles info
+I1 = handles.img1;
+I2 = handles.img2;
+axes1 = handles.axes1;
+axes2 = handles.axes2;
+rbt1 = handles.radiobutton7pts;
+rbt2 = handles.radiobutton8pts;
+rbt3 = handles.radiobuttonRansac;
+
+%Pick the points
+n = 4;
+
+xL = ginput(n);
+hold on;
+for i=1:n
+    plot(axes1,xL(i,1),xL(i,2),'*r','MarkerSize',15);
+%     hold on;
+    h=text(axes1,xL(i,1)+5,xL(i,2),num2str(i));
+    h.FontSize=15;
+end
+
+xR = ginput(n);
+hold on;
+for i=1:n
+    plot(axes2,xR(i,1),xR(i,2),'*r','MarkerSize',15);
+%     hold on;
+    h=text(axes2,xR(i,1)+5,xR(i,2),num2str(i));
+    h.FontSize=15;
+end
+
+%Change to homogeneous coordinates
+xL(:,3) = ones(n,1);
+xR(:,3) = ones(n,1);
+xL = xL';
+xR = xR';
+
+H = estimateHomography(xL,xR);
+
+%Display in GUI
+set(handles.uitableH,'Data',H);
+guidata(hObject,handles);
 
 % --- Executes on button press in pushbuttonEpipoles.
 function pushbuttonEpipoles_Callback(hObject, eventdata, handles)
@@ -200,4 +266,22 @@ F = estimateFondamentalMat(xL, xR, 'norm');
 
 %Display in GUI
 set(handles.uitableF,'Data',F);
+guidata(hObject,handles);
+
+
+% --- Executes on button press in pushbuttonWarp.
+function pushbuttonWarp_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbuttonWarp (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%Get handles info
+I1 = handles.img1;
+
+H = get(handles.uitableH,'Data');
+
+newI = vgg_warp_H(I1, H, 'linear', 'fit');
+figure;
+imshow(newI);
+
 guidata(hObject,handles);
